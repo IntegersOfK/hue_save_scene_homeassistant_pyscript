@@ -1,12 +1,6 @@
 import requests
 requests.packages.urllib3.disable_warnings()
 
-# Dummy decorator function for when running as native CLI instead of pyscript in home assistant
-def dummy_service(func):
-    return func
-
-if 'service' not in globals():
-    service = dummy_service
 
 def update_scene(hue_bridge_ip, hue_api_key, scene_id, lights_actions):
     log.debug("Creating/updating scene with ID: %s", scene_id)
@@ -14,13 +8,8 @@ def update_scene(hue_bridge_ip, hue_api_key, scene_id, lights_actions):
     headers = {'hue-application-key': hue_api_key}
 
     data = {"type": "scene", "actions": lights_actions}
-    response = None
-    if 'task' in globals():
-        # Use task.executor if available (when running in HA)
-        response = task.executor(requests.put, url, headers=headers, json=data, verify=False)
-    else:
-        response = requests.get(url, headers=headers, json=data, verify=False)
-
+    response = task.executor(requests.put, url, headers=headers, json=data, verify=False)
+   
     return response.json()
 
 @service
@@ -30,14 +19,8 @@ def hue_scene_save(hue_bridge_ip, hue_api_key, hue_scene_id):
     # Fetch scene data
     url = f'https://{hue_bridge_ip}/clip/v2/resource/scene/{hue_scene_id}'
     headers = {'hue-application-key': hue_api_key}
-    response = None
-    if 'task' in globals():
-        # Use task.executor if available
-        response = task.executor(requests.get, url, headers=headers, verify=False)
-    else:
-        # Fallback to standard requests if task is not available
-        log.debug("Running outside Home Assistant, using standard requests.get")
-        response = requests.get(url, headers=headers, verify=False)
+    response = task.executor(requests.get, url, headers=headers, verify=False)
+ 
 
     scene_data = response.json()
 
