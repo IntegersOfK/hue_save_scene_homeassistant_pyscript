@@ -86,14 +86,29 @@ def get_scene_lights(hue_bridge_ip, hue_api_key, scene_id):
     return light_ids
 
 @service
-def hue_scene_save(hue_bridge_ip, hue_api_key, hue_scene_id):                                                                              
-    log.debug("Hue save script started")                                                                                                   
-                                                                                                                                           
-    scene_lights = get_scene_lights(hue_bridge_ip, hue_api_key, hue_scene_id)                                                              
-    lights_states = get_light_states_for_scene(hue_bridge_ip, hue_api_key, scene_lights)                                                    
-                                                                                                                                           
-    scene_response = update_scene(hue_bridge_ip, hue_api_key, hue_scene_id, lights_states)                                                 
+def hue_scene_save(hue_bridge_id, hue_api_key, hue_scene_id):
+    log.debug("Hue save script started")
+    hue_bridge_ip = get_hue_bridge_ip(hue_bridge_id)
+    scene_lights = get_scene_lights(hue_bridge_ip, hue_api_key, hue_scene_id)
+    lights_states = get_light_states_for_scene(hue_bridge_ip, hue_api_key, scene_lights)
+    scene_response = update_scene(hue_bridge_ip, hue_api_key, hue_scene_id, lights_states)
     log.info("Scene creation/update response: %s", scene_response)
+
+def get_hue_bridge_ip(hue_bridge_id):
+    """Since IP addresses are usually dynamic, the bridge id is a better selector.
+    But that means we have to check where it is first."""
+
+    url = "https://discovery.meethue.com"
+    try:
+        response = task.executor(requests.get, url, verify=False)
+    except NameError as e:
+        log.debug("Running outside of Home Assistant, not using task.executor")
+        response = requests.get(url)
+    match = [b["internalipaddress"] for b in response.json() if hue_bridge_id == b["id"]]
+    if len(match):
+        log.debug("Found bridge IP " + str(match) + " for bridge ID + " + hue_bridge_id)
+        return match[0]
+
 
 if __name__ == "__main__":
     # Use the main function when invoked from regular python cli, otherwise home assistant uses pyscript @service
@@ -103,9 +118,9 @@ if __name__ == "__main__":
     log = logging.getLogger(__name__)
 
     parser = argparse.ArgumentParser(description='To use when not integrated with Home Assistant PyScript')
-    parser.add_argument('-b', '--hue_bridge_ip', required=True)
+    parser.add_argument('-b', '--hue_bridge_id', required=True)
     parser.add_argument('-a', '--hue_api_key', required=True)
     parser.add_argument('-s', '--hue_scene_id', required=True)
 
     args = parser.parse_args()
-    hue_scene_save(args.hue_bridge_ip, args.hue_api_key, args.hue_scene_id)
+    hue_scene_save(args.hue_bridge_id, args.hue_api_key, args.hue_scene_id)
