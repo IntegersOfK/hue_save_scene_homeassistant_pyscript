@@ -16,7 +16,7 @@ This script works with the Home Assistant custom component Pyscript and exposes 
 - You should now be able to call the service pyscript.hue_scene_save with the data. For example, here's how mine looks.
 
 ```
-hue_bridge_ip: 10.0.0.48
+hue_bridge_id: ecb5fafffe9d4cfa
 hue_api_key: hF6rilCE-VOmqTq0wGFqOj5xW2HBW-1HM9i7tdCu
 hue_scene_id: cfb3f77f-ff35-45b9-877c-57e5bad5c473
 ``` 
