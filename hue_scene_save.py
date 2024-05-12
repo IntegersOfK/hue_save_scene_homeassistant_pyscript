@@ -88,7 +88,7 @@ def get_scene_lights(hue_bridge_ip, hue_api_key, scene_id):
 @service
 def hue_scene_save(hue_bridge_id_or_ip, hue_api_key, hue_scene_id):
     log.debug("Hue save script started")
-    if hue_bridge_id_or_ip.contains("."): # when using IP
+    if "." in hue_bridge_id_or_ip: # when using IP
         hue_bridge_ip = hue_bridge_id_or_ip
     else:
         hue_bridge_ip = get_hue_bridge_ip(hue_bridge_id_or_ip) # have to discover it
