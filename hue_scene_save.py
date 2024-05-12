@@ -86,17 +86,21 @@ def get_scene_lights(hue_bridge_ip, hue_api_key, scene_id):
     return light_ids
 
 @service
-def hue_scene_save(hue_bridge_id, hue_api_key, hue_scene_id):
+def hue_scene_save(hue_bridge_id_or_ip, hue_api_key, hue_scene_id):
     log.debug("Hue save script started")
-    hue_bridge_ip = get_hue_bridge_ip(hue_bridge_id)
+    if hue_bridge_id_or_ip.contains("."): # when using IP
+        hue_bridge_ip = hue_bridge_id_or_ip
+    else:
+        hue_bridge_ip = get_hue_bridge_ip(hue_bridge_id_or_ip) # have to discover it
     scene_lights = get_scene_lights(hue_bridge_ip, hue_api_key, hue_scene_id)
     lights_states = get_light_states_for_scene(hue_bridge_ip, hue_api_key, scene_lights)
     scene_response = update_scene(hue_bridge_ip, hue_api_key, hue_scene_id, lights_states)
     log.info("Scene creation/update response: %s", scene_response)
 
 def get_hue_bridge_ip(hue_bridge_id):
-    """Since IP addresses are usually dynamic, the bridge id is a better selector.
-    But that means we have to check where it is first."""
+    """Since IP addresses are usually dynamic, the bridge id is a better selector in general, but the
+    endpoint to check where it is can go down. TODO: Do discovery with mDNS too and cache it somewhere."
+    """
 
     url = "https://discovery.meethue.com"
     try:
@@ -118,9 +122,9 @@ if __name__ == "__main__":
     log = logging.getLogger(__name__)
 
     parser = argparse.ArgumentParser(description='To use when not integrated with Home Assistant PyScript')
-    parser.add_argument('-b', '--hue_bridge_id', required=True)
+    parser.add_argument('-b', '--hue_bridge_id_or_ip', required=True)
     parser.add_argument('-a', '--hue_api_key', required=True)
     parser.add_argument('-s', '--hue_scene_id', required=True)
 
     args = parser.parse_args()
-    hue_scene_save(args.hue_bridge_id, args.hue_api_key, args.hue_scene_id)
+    hue_scene_save(args.hue_bridge_id_or_ip, args.hue_api_key, args.hue_scene_id)
